@@ -1,0 +1,8 @@
+# P1 et P3 agissent sans communiquer, puis écrivent tous les deux à P2
+1 L
+3 L
+3 L
+1 S 2
+3 S 2
+2 R
+2 R

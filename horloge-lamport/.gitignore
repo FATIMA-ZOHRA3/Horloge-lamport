@@ -1,0 +1,7 @@
+# Fichiers générés
+*.o
+proc
+journaux/
+resultats/*.png
+__pycache__/
+*.pyc
