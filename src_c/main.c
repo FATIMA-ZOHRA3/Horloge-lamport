@@ -1,42 +1,54 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "network/tcp_protocol.h"
+#include "process.h"
 
-#define N 3
-
+/* Test etape 3 : chacun envoie un message a tous les autres,
+ * puis attend n-1 messages.
+ * Usage : process.exe <numero> <n>      ex : process.exe 2 3 */
 int main(int argc, char* argv[]) {
-    if (argc != 2) { printf("Usage : process.exe P1|P2\n"); return 1; }
+    if (argc != 3) {
+        printf("Usage : %s <numero> <n>\n", argv[0]);
+        return 1;
+    }
+    int moi = atoi(argv[1]);
+    int n   = atoi(argv[2]);
+
     if (!network_init()) return 1;
 
-    if (strcmp(argv[1], "P2") == 0) {
-        SOCKET server = create_server(BASE_PORT + 2);
-        if (server == INVALID_SOCKET) return 1;
-        SOCKET client = accept_client(server);
+    Processus p;
+    if (!process_init(&p, moi, n)) {
+        printf("[P%d] Echec de l'initialisation\n", moi);
+        process_fermer(&p);
+        network_cleanup();
+        return 1;
+    }
+    printf("[P%d] Connecte aux %d autres processus\n", moi, n - 1);
 
-        Lecteur lec;
-        lecteur_init(&lec, client);
+    /* envoyer un message a chaque autre processus */
+    for (int k = 1; k <= n; k++) {
+        if (k == moi) continue;
         Message m;
-        while (recv_message(&lec, N, &m) == 1)
-            printf("P2 recoit : exp=%d id=%d lamport=%d vecteur=%d,%d,%d\n",
-                   m.expediteur, m.id, m.lamport, m.vecteur[0], m.vecteur[1], m.vecteur[2]);
-        printf("P1 a ferme la connexion.\n");
-        closesocket(client);
-        closesocket(server);
+        memset(&m, 0, sizeof(m));
+        m.expediteur = moi;
+        m.id = moi * 1000 + k;
+        printf("[P%d] envoie id=%d a P%d\n", moi, m.id, k);
+        process_envoyer(&p, k, &m);
     }
-    else if (strcmp(argv[1], "P1") == 0) {
-        SOCKET s = connect_to_process(BASE_PORT + 2, 50, 200);
-        if (s == INVALID_SOCKET) return 1;
-        for (int i = 1; i <= 3; i++) {
-            Message m = {0};
-            m.expediteur = 1;
-            m.id = 1000 + i;
-            m.lamport = i;
-            m.vecteur[0] = i;
-            send_message(s, N, &m);
-            printf("P1 envoie id=%d\n", m.id);
-        }
-        closesocket(s);
+
+    /* recevoir n-1 messages (de n'importe qui) */
+    for (int i = 0; i < n - 1; i++) {
+        Message m;
+        int r = process_recevoir(&p, &m, 10000);
+        if (r == RECV_OK)
+            printf("[P%d] RECOIT id=%d de P%d\n", moi, m.id, m.expediteur);
+        else if (r == RECV_TIMEOUT)
+            printf("[P%d] TIMEOUT : rien recu en 10 s\n", moi);
+        else
+            printf("[P%d] ERREUR de reception\n", moi);
     }
+
+    process_fermer(&p);
     network_cleanup();
     return 0;
 }

@@ -26,15 +26,25 @@ typedef struct {
     int    len;
 } Lecteur;
 
+/* Winsock */
 int    network_init(void);
 void   network_cleanup(void);
+
+/* Serveur / client */
 SOCKET create_server(int port);
 SOCKET accept_client(SOCKET server_socket);
 SOCKET connect_to_process(int port, int max_retries, int delay_ms);
 
+/* Envoi */
 int  send_all(SOCKET s, const char* data, int len);
 int  send_message(SOCKET s, int n, const Message* m);
+
+/* Reception */
 void lecteur_init(Lecteur* l, SOCKET s);
-int  recv_message(Lecteur* l, int n, Message* m);   /* 1=ok, 0=ferme, -1=erreur */
+int  lecteur_remplir(Lecteur* l);                              /* un recv() : >0 octets, 0 ferme, <0 erreur */
+int  lecteur_extraire_ligne(Lecteur* l, char* out, int taille);/* 1 si une ligne complete est dans le tampon */
+int  lecteur_extraire(Lecteur* l, int n, Message* m);          /* 1 si un message complet est dans le tampon */
+int  recv_message(Lecteur* l, int n, Message* m);              /* bloquant : 1=ok, 0=ferme, -1=erreur */
+int  attendre_lisible(SOCKET s, int ms);                       /* 1=lisible, 0=timeout, -1=erreur */
 
 #endif

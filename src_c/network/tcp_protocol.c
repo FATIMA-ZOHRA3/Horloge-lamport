@@ -12,6 +12,8 @@ int network_init(void) {
 
 void network_cleanup(void) { WSACleanup(); }
 
+/* ---------- envoi ---------- */
+
 /* send() peut n'envoyer qu'une partie : on boucle jusqu'au bout */
 int send_all(SOCKET s, const char* data, int len) {
     int total = 0;
@@ -37,36 +39,72 @@ int send_message(SOCKET s, int n, const Message* m) {
     return send_all(s, ligne, pos);
 }
 
+/* ---------- reception ---------- */
+
 void lecteur_init(Lecteur* l, SOCKET s) { l->sock = s; l->len = 0; }
 
-/* Lit une ligne complete, la decode dans *m. 1=ok, 0=connexion fermee, -1=erreur */
+int lecteur_remplir(Lecteur* l) {
+    if (l->len >= (int)sizeof(l->buf)) { l->len = 0; return -1; }   /* ligne trop longue */
+    int r = recv(l->sock, l->buf + l->len, (int)sizeof(l->buf) - l->len, 0);
+    if (r > 0) l->len += r;
+    return r;
+}
+
+int lecteur_extraire_ligne(Lecteur* l, char* out, int taille) {
+    char* nl = (char*)memchr(l->buf, '\n', l->len);
+    if (!nl) return 0;
+    int longueur = (int)(nl - l->buf);
+    int copie = longueur < taille - 1 ? longueur : taille - 1;
+    memcpy(out, l->buf, copie);
+    if (copie > 0 && out[copie - 1] == '\r') copie--;
+    out[copie] = '\0';
+    int consomme = longueur + 1;
+    memmove(l->buf, l->buf + consomme, l->len - consomme);
+    l->len -= consomme;
+    return 1;
+}
+
+/* "exp=1;id=1001;lamport=2;vecteur=2,0,0" -> Message */
+static int decoder_ligne(const char* ligne, int n, Message* m) {
+    int lu = 0;
+    memset(m, 0, sizeof(*m));
+    if (sscanf(ligne, "exp=%d;id=%d;lamport=%d;vecteur=%n",
+               &m->expediteur, &m->id, &m->lamport, &lu) < 3 || lu == 0)
+        return 0;
+    const char* p = ligne + lu;
+    for (int k = 0; k < n; k++) {
+        char* fin;
+        m->vecteur[k] = (int)strtol(p, &fin, 10);
+        if (fin == p) return 0;
+        p = (*fin == ',') ? fin + 1 : fin;
+    }
+    return m->expediteur >= 1 && m->expediteur <= n;
+}
+
+int lecteur_extraire(Lecteur* l, int n, Message* m) {
+    char ligne[TAILLE_LIGNE];
+    while (lecteur_extraire_ligne(l, ligne, sizeof(ligne))) {
+        if (decoder_ligne(ligne, n, m)) return 1;
+        printf("Ligne mal formee ignoree : %s\n", ligne);
+    }
+    return 0;
+}
+
 int recv_message(Lecteur* l, int n, Message* m) {
     for (;;) {
-        char* nl = (char*)memchr(l->buf, '\n', l->len);
-        if (nl) {
-            *nl = '\0';
-            int lu = 0;
-            memset(m, 0, sizeof(*m));
-            int ok = sscanf(l->buf, "exp=%d;id=%d;lamport=%d;vecteur=%n",
-                            &m->expediteur, &m->id, &m->lamport, &lu) >= 3 && lu > 0;
-            if (ok) {
-                const char* p = l->buf + lu;
-                for (int k = 0; k < n && ok; k++) {
-                    char* fin;
-                    m->vecteur[k] = (int)strtol(p, &fin, 10);
-                    if (fin == p) ok = 0;
-                    p = (*fin == ',') ? fin + 1 : fin;
-                }
-            }
-            int consomme = (int)(nl - l->buf) + 1;
-            memmove(l->buf, l->buf + consomme, l->len - consomme);
-            l->len -= consomme;
-            if (!ok) { printf("Ligne mal formee ignoree\n"); continue; }
-            return 1;
-        }
-        if (l->len >= (int)sizeof(l->buf)) return -1;      /* ligne trop longue */
-        int r = recv(l->sock, l->buf + l->len, (int)sizeof(l->buf) - l->len, 0);
-        if (r > 0) { l->len += r; continue; }
-        return (r == 0) ? 0 : -1;
+        if (lecteur_extraire(l, n, m)) return 1;
+        int r = lecteur_remplir(l);
+        if (r <= 0) return (r == 0) ? 0 : -1;
     }
+}
+
+int attendre_lisible(SOCKET s, int ms) {
+    fd_set set;
+    struct timeval tv;
+    FD_ZERO(&set);
+    FD_SET(s, &set);
+    tv.tv_sec = ms / 1000;
+    tv.tv_usec = (ms % 1000) * 1000;
+    int r = select((int)s + 1, &set, NULL, NULL, &tv);
+    return r < 0 ? -1 : (r == 0 ? 0 : 1);
 }

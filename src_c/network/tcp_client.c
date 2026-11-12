@@ -9,12 +9,11 @@ SOCKET connect_to_process(int port, int max_retries, int delay_ms) {
     addr.sin_family = AF_INET;
     addr.sin_port = htons((u_short)port);
     inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
-    int i;
-    for (i = 0; i < max_retries; i++) {
+
+    for (int i = 0; i < max_retries; i++) {
         SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (s == INVALID_SOCKET) return INVALID_SOCKET;
         if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == 0) {
-            printf("Connexion reussie au port %d\n", port);
             return s;
         }
         closesocket(s);
