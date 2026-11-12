@@ -5,3 +5,4 @@ journaux/
 resultats/*.png
 __pycache__/
 *.pyc
+*.exe
