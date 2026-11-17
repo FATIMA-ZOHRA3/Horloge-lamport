@@ -6,3 +6,6 @@ resultats/*.png
 __pycache__/
 *.pyc
 *.exe
+
+*.s
+erreurs.txt
