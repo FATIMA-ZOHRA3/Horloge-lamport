@@ -1,0 +1,3 @@
+pid,type,temps_ms,lamport,vecteur,msg_id,pair
+1,LOCAL,1794944129102,1,1;0;0,,
+1,ENVOI,1794944129103,2,2;0;0,1001,2

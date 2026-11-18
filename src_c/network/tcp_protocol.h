@@ -1,11 +1,28 @@
 #ifndef TCP_PROTOCOL_H
 #define TCP_PROTOCOL_H
 
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0601
+#ifdef _WIN32
+  #ifndef _WIN32_WINNT
+  #define _WIN32_WINNT 0x0601
+  #endif
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+#else
+  /* Linux / Docker : memes noms que Winsock pour ne pas toucher au reste du code */
+  #include <unistd.h>
+  #include <errno.h>
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <sys/select.h>
+  #include <netinet/in.h>
+  #include <arpa/inet.h>
+  typedef int SOCKET;
+  #define INVALID_SOCKET  (-1)
+  #define SOCKET_ERROR    (-1)
+  #define closesocket(s)  close(s)
+  #define WSAGetLastError() errno
+  #define Sleep(ms)       usleep((ms) * 1000)
 #endif
-#include <winsock2.h>
-#include <ws2tcpip.h>
 
 #define BASE_PORT    5000      /* processus i -> port 5000 + i */
 #define MAX_PROC     5

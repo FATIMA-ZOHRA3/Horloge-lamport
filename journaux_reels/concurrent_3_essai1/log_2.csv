@@ -1,0 +1,3 @@
+pid,type,temps_ms,lamport,vecteur,msg_id,pair
+2,RECEPTION,1794944131104,3,2;1;0,1001,1
+2,RECEPTION,1794944131105,4,2;2;3,3001,3
