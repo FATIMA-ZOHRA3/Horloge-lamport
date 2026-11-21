@@ -9,3 +9,6 @@ __pycache__/
 
 *.s
 erreurs.txt
+dashboard/.venv/
+dashboard/__pycache__/
+dashboard/sorties/

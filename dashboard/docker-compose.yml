@@ -1,0 +1,16 @@
+name: lamport_dashboard
+services:
+  clocks:
+    build:
+      context: ./docker
+    image: lamport-clocks:latest
+    volumes:
+      - ${REPO_DIR:-..}:/repo:ro
+      - ./sorties:/logs
+    environment:
+      - CLOCK_MODE=${CLOCK_MODE:-lamport}
+      - SRC_SUBDIR=${SRC_SUBDIR:-src_c}
+      - N_PROCS=${N_PROCS:-3}
+      - START_INDEX=${START_INDEX:-1}
+      - SCENARIO=${SCENARIO:-../scenarios/chaine_3.txt}
+      - START_DELAY=${START_DELAY:-0}

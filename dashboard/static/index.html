@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Horloges logiques — Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<aside class="sidebar">
+  <div class="brand"><span class="dot"></span>
+    <div><b>Horloges logiques</b><small>Lamport · Vectorielles</small></div></div>
+  <nav>
+    <button class="nav active" data-tab="timeline">Chronogramme</button>
+    <button class="nav" data-tab="compare">Comparaison</button>
+    <button class="nav" data-tab="causal">Causalité</button>
+    <button class="nav" data-tab="events">Événements</button>
+    <button class="nav" data-tab="console">Console Docker</button>
+  </nav>
+  <div class="side-foot"><span id="dockerChip" class="chip">Docker …</span>
+    <small>ENSAH · Mini-projet n°13</small></div>
+</aside>
+
+<main>
+  <header class="topbar">
+    <div><h1>Tableau de bord</h1><p id="subtitle">Chargement…</p></div>
+    <div class="actions">
+      <select id="source"></select>
+      <button id="btnLamport" class="btn primary">▶ Lancer Lamport</button>
+      <button id="btnVector" class="btn primary alt">▶ Lancer Vectoriel</button>
+      <button id="btnStop" class="btn danger">■ Arrêter</button>
+      <button id="btnRefresh" class="btn">⟳ Actualiser</button>
+    </div>
+  </header>
+    <section class="launchbar">
+    <label>Scénario <select id="scenario"></select></label>
+    <label>Processus <input id="nproc" type="number" min="1" max="16" value="3"></label>
+    <button id="btnScenView" class="btn">👁 Voir / masquer le scénario</button>
+  </section>
+  <pre id="scenPreview" class="console small" hidden></pre>
+  <section class="kpis" id="kpis"></section>
+  <div id="warnings"></div>
+
+  <section id="tab-timeline" class="panel tab active">
+    <div class="toolbar">
+      <div class="seg">
+        <label><input type="radio" name="clock" value="lamport" checked> Horloge de Lamport</label>
+        <label><input type="radio" name="clock" value="vector"> Horloge vectorielle</label>
+      </div>
+      <div class="legend">
+        <span><i class="c-local"></i>Local</span><span><i class="c-send"></i>Envoi</span>
+        <span><i class="c-recv"></i>Réception</span>
+        <span><i class="c-past"></i>Passé causal</span><span><i class="c-future"></i>Futur causal</span>
+        <span><i class="c-conc"></i>Concurrent</span>
+      </div>
+    </div>
+    <p class="hint">Clique sur un événement pour afficher son passé, son futur et ses événements concurrents.</p>
+    <div id="eventInfo" class="info"></div>
+    <div id="timeline" class="scroll"></div>
+  </section>
+
+  <section id="tab-compare" class="panel tab">
+    <h2>Lamport vs horloges vectorielles</h2>
+    <div id="compareCards" class="cards"></div>
+    <h3>Événements par processus</h3>
+    <div id="barChart"></div>
+    <h3>Synthèse par processus</h3>
+    <div class="scroll"><table id="procTable"></table></div>
+  </section>
+
+  <section id="tab-causal" class="panel tab">
+    <h2>Détection de causalité</h2>
+    <div class="toolbar"><button id="btnCausal" class="btn primary">▶ Exécuter detection_causalite.py</button></div>
+    <pre id="causalOut" class="console small">Aucune exécution.</pre>
+    <h3>Paires d'événements concurrents (vecteurs incomparables)</h3>
+    <div class="scroll"><table id="concTable"></table></div>
+  </section>
+
+  <section id="tab-events" class="panel tab">
+    <h2>Journal des événements</h2>
+    <div class="scroll"><table id="eventTable"></table></div>
+  </section>
+
+  <section id="tab-console" class="panel tab">
+    <h2>Console Docker <span id="runStatus" class="chip">inactif</span></h2>
+    <pre id="console" class="console">En attente d'un lancement…</pre>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>
