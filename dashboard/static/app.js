@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const S = { data: null, clock: "lamport", sel: null, source: "reference", since: 0, poll: null };
-const COLORS = { LOCAL: "#64748b", SEND: "#fbbf24", RECV: "#2dd4bf" };
+const COLORS = { LOCAL: "#8D99AE", SEND: "#E63946", RECV: "#5FB3B8" };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmtV = (v) => (v ? "[" + v.join(", ") + "]" : "—");
 
@@ -95,10 +95,10 @@ function renderTimeline() {
     let color = COLORS[e.type], r = 9;
     if (sel && d.has_vector) {
       const rl = e.id === sel.id ? "self" : rel(e.vector, sel.vector);
-      if (rl === "self") { color = "#ffffff"; r = 11; }
-      else if (rl === "before") color = "#4f8cff";
-      else if (rl === "after") color = "#4ade80";
-      else if (rl === "concurrent") color = "#fb923c";
+      if (rl === "self") { color = "#1D3557"; r = 11; }
+      else if (rl === "before") color = "#457B9D";
+      else if (rl === "after") color = "#2A9D8F";
+      else if (rl === "concurrent") color = "#F4A261";
     }
     const label = S.clock === "lamport" ? (e.lamport ?? "—") : fmtV(e.vector);
     const up = row[e.proc] % 2 === 0;
@@ -143,7 +143,7 @@ function renderCompare() {
   pp.forEach((p, i) => {
     const x = 50 + i * (BW + 40);
     let y = H;
-    [["local", "#64748b"], ["send", "#fbbf24"], ["recv", "#2dd4bf"]].forEach(([k, col]) => {
+        [["local", "#8D99AE"], ["send", "#E63946"], ["recv", "#5FB3B8"]].forEach(([k, col]) => {
       const h = (p[k] / max) * (H - 20);
       y -= h;
       s += `<rect x="${x}" y="${y}" width="${BW}" height="${h}" fill="${col}" rx="3"/>`;
